@@ -10,7 +10,11 @@ class LoginView {
 	private static $keep = 'LoginView::KeepMeLoggedIn';
 	private static $messageId = 'LoginView::Message';
 
-	
+	private $controller;
+
+	public function __construct(\controller\LoginController $controller) {
+		$this->controller = $controller;
+	}
 
 	/**
 	 * Create HTTP response
@@ -21,6 +25,37 @@ class LoginView {
 	 */
 	public function response() {
 		$message = '';
+        var_dump($_POST); //Testing
+
+        
+        //Field emty test for username and password
+        if (isset($_POST[self::$name])){
+            if (empty($_POST[self::$name])){
+                $message = "Username is missing";
+            }
+            else{
+                if(empty($_POST[self::$password])){
+                    $message = "Password is missing";
+                }
+                else{
+
+                    //SET FIELDS
+                    if($this->controller->isUserinTheSystem($_POST[self::$name], $_POST[self::$password])){
+                        
+                        $message = "Logged in, show a loggin view!!!";
+
+                    }
+                    else{
+                        $message = "Wrong name or password";
+                       
+                    }
+
+                }
+            }
+        }
+
+        
+       
 		
 		$response = $this->generateLoginFormHTML($message);
 		//$response .= $this->generateLogoutButtonHTML($message);
@@ -71,6 +106,10 @@ class LoginView {
 	//CREATE GET-FUNCTIONS TO FETCH REQUEST VARIABLES
 	private function getRequestUserName() {
 		//RETURN REQUEST VARIABLE: USERNAME
+
 	}
+
+    
+
 	
 }
