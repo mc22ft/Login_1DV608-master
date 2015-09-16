@@ -1,9 +1,16 @@
 <?php
 
+namespace view;
 
 class LayoutView {
+
+ //   private $controller;
+
+	//public function __construct(\controller\LoginController $controller) {
+	//	$this->controller = $controller;
+	//}
   
-  public function render($isLoggedIn, LoginView $v, DateTimeView $dtv) {
+  public function render($isLoggedIn, $htmlResponse, DateTimeView $dtv) {
     echo '<!DOCTYPE html>
       <html>
         <head>
@@ -15,7 +22,7 @@ class LayoutView {
           ' . $this->renderIsLoggedIn($isLoggedIn) . '
           
           <div class="container">
-              ' . $v->response() . '
+              ' . $htmlResponse . '
               
               ' . $dtv->show() . '
           </div>
@@ -25,6 +32,12 @@ class LayoutView {
   }
   
   private function renderIsLoggedIn($isLoggedIn) {
+      //var_dump($this->controller->isLoggedIn());
+      //$test = isset($_SESSION);
+      //var_dump($_SESSION["UserName"]);
+
+      
+      
     if ($isLoggedIn) {
       return '<h2>Logged in</h2>';
     }

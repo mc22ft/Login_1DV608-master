@@ -1,5 +1,7 @@
 <?php
 
+namespace view;
+
 class LoginView {
 	private static $login = 'LoginView::Login';
 	private static $logout = 'LoginView::Logout';
@@ -10,10 +12,10 @@ class LoginView {
 	private static $keep = 'LoginView::KeepMeLoggedIn';
 	private static $messageId = 'LoginView::Message';
 
-	private $controller;
+	private $users;
 
-	public function __construct(\controller\LoginController $controller) {
-		$this->controller = $controller;
+	public function __construct(\model\Users $users) {
+		$this->users = $users;
 	}
 
 	/**
@@ -25,11 +27,55 @@ class LoginView {
 	 */
 	public function response() {
 		$message = '';
-        var_dump($_POST); //Testing
+
+      
+
+        if (!isset($_SESSION["visits"]))
+        $_SESSION["visits"] = 0;
+        $_SESSION["visits"] = $_SESSION["visits"] + 1;
+ 
+        if ($_SESSION["visits"] > 1)
+        {
+            if(isset($_POST[self::$logout])){
+             
+             //var_dump($_POST);
+            
+                 $this->logout();
+                 $message = "Bye bye!";
+                 
+                 return $this->generateLoginFormHTML($message);
+            }
+        }
+        //else
+        //{
+            $message = "";
+      //      $response = $this->generateLoginFormHTML($message);
+		    //return $response;
+            //  här relodas f5 tangenten
+            //header("Location:".$_SERVER['HTTP_REFERER']."");
+            //nothing to do here!
+            //var_dump("F5 är tryckt!!!");
+        //}
+
+         //if(isset($_POST[self::$logout])){
+         //    
+         //    var_dump($_POST);
+         //   
+         //        $this->logout();
+         //        $message = "Bye bye!";
+         //        
+         //        return $this->generateLoginFormHTML($message);
+         //}
 
         
-        //Field emty test for username and password
-        if (isset($_POST[self::$name])){
+        if($this->isSessionSet()){
+            return $this->generateLogoutButtonHTML($message);
+        }
+        
+
+
+        //Field empty test for username and password
+        if (isset($_POST[self::$login])){
             if (empty($_POST[self::$name])){
                 $message = "Username is missing";
             }
@@ -39,26 +85,38 @@ class LoginView {
                 }
                 else{
 
-                    //SET FIELDS
-                    if($this->controller->isUserinTheSystem($_POST[self::$name], $_POST[self::$password])){
-                        
-                        $message = "Logged in, show a loggin view!!!";
+                    //finns user eller inte
+                    $newUser = new \model\User($_POST[self::$name], $_POST[self::$password]);
 
+                    //if($this->users->getThisUser($_POST[self::$name], $_POST[self::$password])){
+                        if($this->users->getThisUser($newUser)){
+
+                        
+                        $message = "Welcome";
+                        //SET Cookie function
+
+                        if(isset($_POST[self::$keep])){
+
+
+                            //SET COOKIE
+                           $this->setCookie();
+
+                        }
+                        
+                        $response = $this->generateLogoutButtonHTML($message);
+
+                           return $response;
                     }
                     else{
                         $message = "Wrong name or password";
-                       
                     }
 
                 }
             }
-        }
 
-        
-       
-		
-		$response = $this->generateLoginFormHTML($message);
-		//$response .= $this->generateLogoutButtonHTML($message);
+       } 
+
+       $response = $this->generateLoginFormHTML($message);
 		return $response;
 	}
 
@@ -82,14 +140,14 @@ class LoginView {
 	* @return  void, BUT writes to standard output!
 	*/
 	private function generateLoginFormHTML($message) {
-		return '
-			<form method="post" > 
+        return '
+			<form method="post"> 
 				<fieldset>
 					<legend>Login - enter Username and password</legend>
 					<p id="' . self::$messageId . '">' . $message . '</p>
 					
 					<label for="' . self::$name . '">Username :</label>
-					<input type="text" id="' . self::$name . '" name="' . self::$name . '" value="" />
+					<input type="text" id="' . self::$name . '" name="' . self::$name . '" value="' . $this->getRequestUserName() . '" />
 
 					<label for="' . self::$password . '">Password :</label>
 					<input type="password" id="' . self::$password . '" name="' . self::$password . '" />
@@ -106,8 +164,72 @@ class LoginView {
 	//CREATE GET-FUNCTIONS TO FETCH REQUEST VARIABLES
 	private function getRequestUserName() {
 		//RETURN REQUEST VARIABLE: USERNAME
-
+        if(isset($_POST[self::$name])){
+            return $_POST[self::$name]; 
+        }
+        else{
+            return "";
+        }
 	}
+
+    private function setCookie(){
+         setcookie(self::$cookieName, $_SESSION["UserName"], time() + 3600); //TIME?
+         setcookie(self::$cookiePassword, $_SESSION["PassWord"], time() + 3600); //TIME?
+    }
+
+    public function isCookieSet(){
+        //Om det finns en cookie så logga in med den.
+        //$u = $_COOKIE[self::$cookieName]; 
+        //$p = $_COOKIE[self::$cookiePassword];
+        ////Check if user and password is in system
+        //if($svar = $this->users->getThisUser($u, $p)){
+        //    return TRUE;
+        //}
+        //return FALSE;
+        $name = "";
+        $password = "";
+       if(isset($_COOKIE[self::$cookieName])){   // only if it is set
+         $name = $_COOKIE[self::$cookieName];
+        }
+         if(isset($_COOKIE[self::$cookiePassword])){   // only if it is set
+         $password = $_COOKIE[self::$cookiePassword];
+        }
+       
+        //Check if user and password is in system
+        if($this->users->getThisUser($name, $password)){
+            return TRUE;
+        }
+        return FALSE;
+
+    }
+
+    //return bool
+    public function isSessionSet(){
+
+        //Get session obj
+        $sessionObj = $this->users->getSessionUser();
+
+        //If null retunr false
+        if(!is_null($sessionObj)){
+            if($this->users->getThisUser($sessionObj)){
+                return TRUE;
+                }
+        }
+        
+
+        return FALSE;
+    }
+
+    private function logout(){
+        // remove all session variables
+        session_unset(); 
+
+        // destroy the session 
+        //session_destroy(); 
+    }
+
+
+   
 
     
 
