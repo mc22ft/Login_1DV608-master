@@ -3,7 +3,8 @@
 namespace view;
 
 class LoginView {
-	private static $login = 'LoginView::Login';
+
+    private static $login = 'LoginView::Login';
 	private static $logout = 'LoginView::Logout';
 	private static $name = 'LoginView::UserName';
 	private static $password = 'LoginView::Password';
@@ -26,56 +27,31 @@ class LoginView {
 	 * @return  void BUT writes to standard output and cookies!
 	 */
 	public function response() {
-		$message = '';
+        $message = "";
 
-      
-
-        if (!isset($_SESSION["visits"]))
-        $_SESSION["visits"] = 0;
-        $_SESSION["visits"] = $_SESSION["visits"] + 1;
- 
-        if ($_SESSION["visits"] > 1)
-        {
-            if(isset($_POST[self::$logout])){
-             
-             //var_dump($_POST);
-            
-                 $this->logout();
-                 $message = "Bye bye!";
-                 
-                 return $this->generateLoginFormHTML($message);
-            }
+        //bool
+        //If logout with logout bottom
+        if($this->doByeByeLogout()){
+            return $this->generateLoginFormHTML("Bye bye!");
         }
-        //else
-        //{
-            $message = "";
-      //      $response = $this->generateLoginFormHTML($message);
-		    //return $response;
-            //  här relodas f5 tangenten
-            //header("Location:".$_SERVER['HTTP_REFERER']."");
-            //nothing to do here!
-            //var_dump("F5 är tryckt!!!");
-        //}
 
-         //if(isset($_POST[self::$logout])){
-         //    
-         //    var_dump($_POST);
-         //   
-         //        $this->logout();
-         //        $message = "Bye bye!";
-         //        
-         //        return $this->generateLoginFormHTML($message);
-         //}
-
-        
-        if($this->isSessionSet()){
-            return $this->generateLogoutButtonHTML($message);
+        //Bool
+        //Test before login - sessionlogoin
+        if($this->users->isSessionSet()){
+            return $this->generateLogoutButtonHTML("");
         }
-        
 
+        //Bool
+        // Test before login - cookielogin
+        if($this->isCookieManipulated()){ 
+                return $this->generateLoginFormHTML("Wrong information in cookies");
+        }else if($this->isCookieSet()){
+                return $this->generateLogoutButtonHTML("Welcome back with cookie");
+        }
 
-        //Field empty test for username and password
+        //Field empty test for username and password                      -----   POST LOGIN   -----
         if (isset($_POST[self::$login])){
+
             if (empty($_POST[self::$name])){
                 $message = "Username is missing";
             }
@@ -84,40 +60,36 @@ class LoginView {
                     $message = "Password is missing";
                 }
                 else{
-
-                    //finns user eller inte
-                    $newUser = new \model\User($_POST[self::$name], $_POST[self::$password]);
-
-                    //if($this->users->getThisUser($_POST[self::$name], $_POST[self::$password])){
-                        if($this->users->getThisUser($newUser)){
-
+                        //Get User or NULL
+                        $loggedInUser = $this->users->getUserByNameAndPassword($_POST[self::$name], $_POST[self::$password]);
                         
+                        if($loggedInUser != null) {
                         $message = "Welcome";
-                        //SET Cookie function
 
+                        //Set session
+                        $this->users->saveSessionUser($loggedInUser);
+
+                        //Set Cookie
+                        //If keep buttom is set
                         if(isset($_POST[self::$keep])){
-
-
-                            //SET COOKIE
                            $this->setCookie();
-
+                           $message = "Welcome and you will be remembered";
                         }
-                        
-                        $response = $this->generateLogoutButtonHTML($message);
-
-                           return $response;
+                        return $this->generateLogoutButtonHTML($message);
                     }
                     else{
                         $message = "Wrong name or password";
                     }
-
                 }
             }
+       }
+       
+       if(isset($_POST[self::$logout])){                            //-----   POST LOGOUT    -----                       
+           //Logout                          
+           $this->logout();
+       }
 
-       } 
-
-       $response = $this->generateLoginFormHTML($message);
-		return $response;
+       return $this->generateLoginFormHTML($message);
 	}
 
 	/**
@@ -172,66 +144,65 @@ class LoginView {
         }
 	}
 
-    private function setCookie(){
-         setcookie(self::$cookieName, $_SESSION["UserName"], time() + 3600); //TIME?
-         setcookie(self::$cookiePassword, $_SESSION["PassWord"], time() + 3600); //TIME?
-    }
-
-    public function isCookieSet(){
-        //Om det finns en cookie så logga in med den.
-        //$u = $_COOKIE[self::$cookieName]; 
-        //$p = $_COOKIE[self::$cookiePassword];
-        ////Check if user and password is in system
-        //if($svar = $this->users->getThisUser($u, $p)){
-        //    return TRUE;
-        //}
-        //return FALSE;
-        $name = "";
-        $password = "";
-       if(isset($_COOKIE[self::$cookieName])){   // only if it is set
-         $name = $_COOKIE[self::$cookieName];
-        }
-         if(isset($_COOKIE[self::$cookiePassword])){   // only if it is set
-         $password = $_COOKIE[self::$cookiePassword];
-        }
-       
-        //Check if user and password is in system
-        if($this->users->getThisUser($name, $password)){
-            return TRUE;
-        }
-        return FALSE;
-
-    }
-
-    //return bool
-    public function isSessionSet(){
-
-        //Get session obj
-        $sessionObj = $this->users->getSessionUser();
-
-        //If null retunr false
-        if(!is_null($sessionObj)){
-            if($this->users->getThisUser($sessionObj)){
+    //Bool
+    //Set/Unset session
+    private function doByeByeLogout(){
+        if(isset($_SESSION[self::$messageId])){
+                $message = "" . $_SESSION[self::$messageId];
+                unset($_SESSION[self::$messageId]);
+                return FALSE;
+        }else if(isset($_POST[self::$logout])){
+                $this->logout();
+                $message = "Bye bye!";
+                $_SESSION[self::$messageId] = $message;
                 return TRUE;
-                }
         }
-        
+    }
 
+    //Set
+    private function setCookie(){
+         $selectedUser = $this->users->getSelectedUser();
+         setcookie(self::$cookieName, $_POST[self::$name], time() + 3600);
+         setcookie(self::$cookiePassword, $selectedUser->getPassword(), time() + 3600);
+    }
+
+    //Bool
+    public function isCookieSet(){
+       if(isset($_COOKIE[self::$cookieName]) && isset($_COOKIE[self::$cookiePassword])){   // only if it is set
+          $loggedInUser = $this->users->getUserByNameAndPassword($_COOKIE[self::$cookieName], $_COOKIE[self::$cookiePassword]);
+
+          if($loggedInUser != null) {
+
+               return TRUE;
+          }
+       }
         return FALSE;
     }
 
-    private function logout(){
-        // remove all session variables
-        session_unset(); 
-
-        // destroy the session 
-        //session_destroy(); 
+    //Bool
+    private function isCookieManipulated(){
+       if(isset($_COOKIE[self::$cookieName]) && isset($_COOKIE[self::$cookiePassword])){   // only if it is set
+          $loggedInUser = $this->users->getUserByNameAndPassword($_COOKIE[self::$cookieName], $_COOKIE[self::$cookiePassword]);
+          if($loggedInUser === null) {
+               return TRUE;
+          }else{
+              //Manipulated
+              return FALSE;
+          }
+       }
+        return FALSE;
     }
 
-
-   
-
-    
-
-	
+    //Unset
+    private function logout(){
+        $this->users->unsetSessionUser();
+        
+        //Delete cookie name and password
+        if(isset($_COOKIE[self::$cookieName])){   // only if it is set
+            setcookie(self::$cookieName, "", time() - 3600);
+        }
+        if(isset($_COOKIE[self::$cookiePassword])){   // only if it is set
+            setcookie(self::$cookiePassword, "", time() - 3600); //TIME?
+        }
+    }
 }

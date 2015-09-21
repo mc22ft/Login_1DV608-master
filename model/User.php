@@ -21,6 +21,15 @@ class User {
         return $this->password;
     }
 
+    //Not in use
+    public function setUsername($Username){
+        $this->username = $Username;
+    }
+
+    public function setPassword($Password){
+        $this->password = $Password;
+    }
+
 }
 
 ?>

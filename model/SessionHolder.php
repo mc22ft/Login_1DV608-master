@@ -13,10 +13,11 @@ class SessionHolder{
 	}
 
     /**
-	* @return sessionObj or null
+	* @return sessionObj or null      GET????
 	*/
 	public function load() {
-		if (isset($_SESSION[$this->sessionHolderId])) {
+		    if (isset($_SESSION[$this->sessionHolderId])) {
+            //var_dump("session load sessionholder!!!!");
 			return $_SESSION[$this->sessionHolderId];
 		}
          return NULL;
@@ -26,7 +27,26 @@ class SessionHolder{
 	* @param set user
 	*/
 	public function save(User $user) {
+        //var_dump("session saved sessionholder!!!!");
 		$_SESSION[$this->sessionHolderId] = $user;
+	}
+
+     /**
+	* unset session
+	*/
+    public function delete() {
+        //var_dump("Session unset in sessionholder");
+		unset($_SESSION[$this->sessionHolderId]);
+        //var_dump($_SESSION[$this->sessionHolderId]);
+	}
+
+    //return bool
+    public function set() {
+        if (isset($_SESSION[$this->sessionHolderId])) {
+            //var_dump("Session set in sessionholder True");
+            return TRUE;
+		}
+        return FALSE;
 	}
 }
 
