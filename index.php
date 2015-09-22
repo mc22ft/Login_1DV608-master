@@ -9,30 +9,42 @@ require_once("model/Users.php");
 require_once("model/SelectedUserDAL.php");
 require_once("controller/LoginController.php");
 require_once("model/SessionHolder.php");
+require_once("model/SessionUser.php");
 
 session_start();
+
 
 //MAKE SURE ERRORS ARE SHOWN... MIGHT WANT TO TURN THIS OFF ON A PUBLIC SERVER
 error_reporting(E_ALL);
 ini_set('display_errors', 'On'); //Testa med 1
 
-//
-////set up the model
-//$dal = new \model\SelectedUserDAL();
-//$users = new \model\UserArray($dal);
 
+//set up the model
 $sessionHolder = new \model\SessionHolder("userSessionHolder");
+$dal = new \model\SelectedUserDAL();
+$users = new \model\Users($sessionHolder, $dal);
+$controller = new \controller\LoginController($users);
+$loginView = new \view\LoginView($users, $controller);
+$dateTimeView = new \view\DateTimeView();
+$layoutView = new \view\LayoutView();
 
 
-$controller = new \controller\LoginController($sessionHolder);
-//$controller->isUserinTheSystem(NULL, NULL);
-$controller->doRunApp();
-//print_r($_SESSION);
-//var_dump(isset($_SESSION));
+//new user
 
-//$isLoogedIn = $sessionHolder->isLoggedIn();
+//$users->add(new \model\User("Admin", password_hash("Password", PASSWORD_BCRYPT))); //DAL?
+	
+        //Run app
+        $truOrFalse = false;
 
-//$lv->render($isLoogedIn, $v, $dtv);
+        //Logg in function
+        $htmlResponse = $loginView->response();
+
+        //kolla om user är inloggad eller inte 
+        if($users->isSessionSet() || $users->getSelectedUser() != NULL){
+            $truOrFalse = TRUE;
+        }
+      
+        $layoutView->render($truOrFalse, $htmlResponse, $dateTimeView);
 
 
 

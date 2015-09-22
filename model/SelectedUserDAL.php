@@ -26,17 +26,15 @@ class SelectedUserDAL {
             //var_dump("updatera password 2");
              //var_dump($user->getPassword());
              
-
-
-
              if($user->getUsername() === $toBeUpdatedUser->getUsername()){
                 //var_dump("updatera password 3");
 
                 $user->setPassword($updatedUserPassword);
 
-                //var_dump($user->getPassword());
+                
                 //save
                 $this->saveSelection($user);
+                return $user;
 
                 
             }

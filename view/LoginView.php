@@ -14,9 +14,11 @@ class LoginView {
 	private static $messageId = 'LoginView::Message';
 
 	private $users;
+    private $controller;
 
-	public function __construct(\model\Users $users) {
+	public function __construct(\model\Users $users, \controller\logincontroller $controller) {
 		$this->users = $users;
+        $this->controller = $controller;
 	}
 
 	/**
@@ -38,17 +40,20 @@ class LoginView {
         //Bool
         //Test before login - sessionlogoin
         if($this->users->isSessionSet()){
+            
             return $this->generateLogoutButtonHTML("");
         }
 
-        //Bool
-        // Test before login - cookielogin
-        if($this->isCookieManipulated()){ 
-                return $this->generateLoginFormHTML("Wrong information in cookies");
-        }else if($this->isCookieSet()){
-                return $this->generateLogoutButtonHTML("Welcome back with cookie");
-        }
 
+        //
+        if($this->isCookieSet()){
+            if($this->cookieLogin()){ 
+                return $this->generateLogoutButtonHTML("Welcome back with cookie");
+            }else{
+                return $this->generateLoginFormHTML("Wrong information in cookies");
+            }
+        }
+        
         //Field empty test for username and password                      -----   POST LOGIN   -----
         if (isset($_POST[self::$login])){
 
@@ -60,26 +65,20 @@ class LoginView {
                     $message = "Password is missing";
                 }
                 else{
-                        //Get User or NULL
-                        $loggedInUser = $this->users->getUserByNameAndPassword($_POST[self::$name], $_POST[self::$password]);
                         
-                        if($loggedInUser != null) {
-                        $message = "Welcome";
+                        if($this->controller->doLoginUser($_POST[self::$name], $_POST[self::$password])) {
+                            $message = "Welcome";
 
-                        //Set session
-                        $this->users->saveSessionUser($loggedInUser);
-
-                        //Set Cookie
-                        //If keep buttom is set
-                        if(isset($_POST[self::$keep])){
-                           $this->setCookie();
-                           $message = "Welcome and you will be remembered";
+                            //Set Cookie
+                            //If keep buttom is set
+                            if(isset($_POST[self::$keep])){
+                                $this->setCookie();
+                                $message = "Welcome and you will be remembered";
+                            }
+                            return $this->generateLogoutButtonHTML($message);
+                        }else{
+                            $message = "Wrong name or password";
                         }
-                        return $this->generateLogoutButtonHTML($message);
-                    }
-                    else{
-                        $message = "Wrong name or password";
-                    }
                 }
             }
        }
@@ -162,41 +161,39 @@ class LoginView {
     //Set
     private function setCookie(){
          $selectedUser = $this->users->getSelectedUser();
-         setcookie(self::$cookieName, $_POST[self::$name], time() + 3600);
+         setcookie(self::$cookieName, $selectedUser->getUsername(), time() + 3600);
          setcookie(self::$cookiePassword, $selectedUser->getPassword(), time() + 3600);
     }
 
     //Bool
     public function isCookieSet(){
        if(isset($_COOKIE[self::$cookieName]) && isset($_COOKIE[self::$cookiePassword])){   // only if it is set
-          $loggedInUser = $this->users->getUserByNameAndPassword($_COOKIE[self::$cookieName], $_COOKIE[self::$cookiePassword]);
-
-          if($loggedInUser != null) {
-
-               return TRUE;
-          }
+          return TRUE;
        }
         return FALSE;
     }
 
     //Bool
-    private function isCookieManipulated(){
-       if(isset($_COOKIE[self::$cookieName]) && isset($_COOKIE[self::$cookiePassword])){   // only if it is set
-          $loggedInUser = $this->users->getUserByNameAndPassword($_COOKIE[self::$cookieName], $_COOKIE[self::$cookiePassword]);
-          if($loggedInUser === null) {
-               return TRUE;
-          }else{
-              //Manipulated
-              return FALSE;
+    public function cookieLogin(){
+          //om cookie user och password finns return true
+          if(isset($_COOKIE[self::$cookieName]) && isset($_COOKIE[self::$cookiePassword])){   // only if it is set
+               
+               if($this->controller->doLoginUser($_COOKIE[self::$cookieName], $_COOKIE[self::$cookiePassword])) {
+              
+                    $this->setCookie();
+                    return TRUE;
+               }else{
+                    //Manipulated
+                    return FALSE;
+               }
           }
-       }
+          
         return FALSE;
     }
 
     //Unset
     private function logout(){
-        $this->users->unsetSessionUser();
-        
+        $this->controller->doLogout();
         //Delete cookie name and password
         if(isset($_COOKIE[self::$cookieName])){   // only if it is set
             setcookie(self::$cookieName, "", time() - 3600);
