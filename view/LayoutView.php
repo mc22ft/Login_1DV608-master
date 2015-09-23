@@ -4,12 +4,7 @@ namespace view;
 
 class LayoutView {
 
- //   private $controller;
-
-	//public function __construct(\controller\LoginController $controller) {
-	//	$this->controller = $controller;
-	//}
-  
+    //Render page
   public function render($isLoggedIn, $htmlResponse, DateTimeView $dtv) {
     echo '<!DOCTYPE html>
       <html>
@@ -32,12 +27,7 @@ class LayoutView {
   }
   
   private function renderIsLoggedIn($isLoggedIn) {
-      //var_dump($this->controller->isLoggedIn());
-      //$test = isset($_SESSION);
-      //var_dump($_SESSION["UserName"]);
 
-      
-      
     if ($isLoggedIn) {
       return '<h2>Logged in</h2>';
     }

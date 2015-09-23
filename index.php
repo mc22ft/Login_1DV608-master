@@ -13,11 +13,9 @@ require_once("model/SessionUser.php");
 
 session_start();
 
-
 //MAKE SURE ERRORS ARE SHOWN... MIGHT WANT TO TURN THIS OFF ON A PUBLIC SERVER
 error_reporting(E_ALL);
-ini_set('display_errors', 'On'); //Testa med 1
-
+ini_set('display_errors', 'On'); 
 
 //set up the model
 $sessionHolder = new \model\SessionHolder("userSessionHolder");
@@ -29,22 +27,22 @@ $dateTimeView = new \view\DateTimeView();
 $layoutView = new \view\LayoutView();
 
 
-//new user
-
-//$users->add(new \model\User("Admin", password_hash("Password", PASSWORD_BCRYPT))); //DAL?
+//New user - Add a user in "selected.user" file if its has to reloads 
+//$users->add(new \model\User("Admin", password_hash("Password", PASSWORD_BCRYPT)));
 	
         //Run app
-        $truOrFalse = false;
+        $LoggedInOrNot = false;
 
         //Logg in function
         $htmlResponse = $loginView->response();
 
-        //kolla om user är inloggad eller inte 
+        //Check if session is set and if there is a user logged in
         if($users->isSessionSet() || $users->getSelectedUser() != NULL){
-            $truOrFalse = TRUE;
+            $LoggedInOrNot = TRUE;
         }
-      
-        $layoutView->render($truOrFalse, $htmlResponse, $dateTimeView);
+        
+        //Output
+        $layoutView->render($LoggedInOrNot, $htmlResponse, $dateTimeView);
 
 
 

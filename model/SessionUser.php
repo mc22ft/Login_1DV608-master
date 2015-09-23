@@ -4,8 +4,8 @@ namespace model;
 
 class SessionUser {
 
-    private $ip;
-    private $browser;
+    private $ip; //Ip number on users computer
+    private $browser; //Browser that user open the page in
 
     public function __construct($ip, $browser) {
 			   $this->ip = $ip;

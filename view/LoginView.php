@@ -40,12 +40,11 @@ class LoginView {
         //Bool
         //Test before login - sessionlogoin
         if($this->users->isSessionSet()){
-            
             return $this->generateLogoutButtonHTML("");
         }
 
-
-        //
+        //Bool
+        //Check cookies and if cookies is manupilated
         if($this->isCookieSet()){
             if($this->cookieLogin()){ 
                 return $this->generateLogoutButtonHTML("Welcome back with cookie");
@@ -54,37 +53,36 @@ class LoginView {
             }
         }
         
+        //Login buttom pressed
         //Field empty test for username and password                      -----   POST LOGIN   -----
-        if (isset($_POST[self::$login])){
-
-            if (empty($_POST[self::$name])){
+        if(isset($_POST[self::$login])){
+            if(empty($_POST[self::$name])){
                 $message = "Username is missing";
-            }
-            else{
-                if(empty($_POST[self::$password])){
-                    $message = "Password is missing";
-                }
-                else{
-                        
+            }else{
+                  if(empty($_POST[self::$password])){
+                      $message = "Password is missing";
+                  }else{  
+                        //Bool
+                        //Login user - if user is in system
                         if($this->controller->doLoginUser($_POST[self::$name], $_POST[self::$password])) {
                             $message = "Welcome";
-
-                            //Set Cookie
-                            //If keep buttom is set
+                            //Set
+                            //If keep buttom is set - set cookies
                             if(isset($_POST[self::$keep])){
                                 $this->setCookie();
                                 $message = "Welcome and you will be remembered";
                             }
+                            //Login form
                             return $this->generateLogoutButtonHTML($message);
                         }else{
-                            $message = "Wrong name or password";
+                             $message = "Wrong name or password";
                         }
-                }
-            }
+                   }
+             }
        }
        
-       if(isset($_POST[self::$logout])){                            //-----   POST LOGOUT    -----                       
-           //Logout                          
+       //Logout buttom pressed
+       if(isset($_POST[self::$logout])){                            //-----   POST LOGOUT    -----                                               
            $this->logout();
        }
 
@@ -132,9 +130,9 @@ class LoginView {
 		';
 	}
 	
-	//CREATE GET-FUNCTIONS TO FETCH REQUEST VARIABLES
+    //Get
+	//Return request username variable to loginform
 	private function getRequestUserName() {
-		//RETURN REQUEST VARIABLE: USERNAME
         if(isset($_POST[self::$name])){
             return $_POST[self::$name]; 
         }
@@ -175,19 +173,16 @@ class LoginView {
 
     //Bool
     public function cookieLogin(){
-          //om cookie user och password finns return true
           if(isset($_COOKIE[self::$cookieName]) && isset($_COOKIE[self::$cookiePassword])){   // only if it is set
-               
                if($this->controller->doLoginUser($_COOKIE[self::$cookieName], $_COOKIE[self::$cookiePassword])) {
-              
+                    //NOT manipulated cookie
                     $this->setCookie();
                     return TRUE;
                }else{
-                    //Manipulated
+                    //Manipulated cookie
                     return FALSE;
                }
           }
-          
         return FALSE;
     }
 

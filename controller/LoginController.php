@@ -11,35 +11,25 @@ class LoginController{
        }
 
     //Bool
+    //Login
     public function doLoginUser($username, $password){
-        //1.Hämta en user modelen
+        //Get user or NULL
         $selected = $this->users->loginUser($username, $password);
-         //2.Kolla om den är null eller inte
-         //var_dump($selected);
         if($selected != NULL){
-            
-            //sätt user i modelen
+            //Set user in model
             $this->users->setselectUser($selected);
-            
-           
-            //Sätter session
+            //Set session in model
             $this->users->saveSessionUser();
-           
             return TRUE;
         }
         return FALSE;
     }
 
-    public function doSessionLogin(){
-        $sessionUser = $this->users->getSessionUser();
-        
-    }
-
+    //Set
+    //Logout
     public function doLogout(){
         $this->users->unsetSessionUser();
         $this->users->logout();
     }
-
-
 }
 ?>

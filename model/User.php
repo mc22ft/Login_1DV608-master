@@ -2,7 +2,6 @@
 
 namespace model;
 
-
 class User {
 
     private $username;
@@ -29,7 +28,6 @@ class User {
     public function setPassword($Password){
         $this->password = $Password;
     }
-
 }
 
 ?>
